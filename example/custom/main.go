@@ -1,29 +1,13 @@
-# Secure (This is a community driven project)
+package main
 
-## Example
-See the [example1](example/custom/main.go), [example2](example/default/main.go).
+import (
+	"context"
 
-DefaultConfig returns a Configuration with strict security settings
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hertz-contrib/secure"
+)
 
-[embedmd]:# (secure.go go /func DefaultConfig/ /^}$/)
-```go
-func DefaultConfig() Config {
-	return Config{
-		SSLRedirect:           true,
-		IsDevelopment:         false,
-		STSSeconds:            315360000,
-		STSIncludeSubdomains:  true,
-		FrameDeny:             true,
-		ContentTypeNosniff:    true,
-		BrowserXssFilter:      true,
-		ContentSecurityPolicy: "default-src 'self'",
-		IENoOpen:              true,
-		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
-	}
-}
-```
-[embedmd]:# (example/customize/main.go go)
-```go
 func main() {
 	h := server.Default(
 		server.WithHostPorts("127.0.0.1:8080"),
@@ -48,4 +32,3 @@ func main() {
 	})
 	h.Spin()
 }
-```
