@@ -59,8 +59,8 @@ func TestNoConfig(t *testing.T) {
 	engine := newServer(Config{})
 	w := ut.PerformRequest(engine, "GET", "http://example.com/foo", nil)
 	result := w.Result()
-	assert.Assert(t, 200 == result.StatusCode())
-	assert.Assert(t, "bar" == string(result.Body()))
+	assert.DeepEqual(t, 200, result.StatusCode())
+	assert.DeepEqual(t, "bar", string(result.Body()))
 }
 
 func TestDefaultConfig(t *testing.T) {
@@ -68,11 +68,11 @@ func TestDefaultConfig(t *testing.T) {
 	w := ut.PerformRequest(engine, "GET", "https://www.example.com/foo", nil)
 	result := w.Result()
 	assert.Assert(t, http.StatusOK == result.StatusCode())
-	assert.Assert(t, "bar" == string(result.Body()))
+	assert.DeepEqual(t, "bar", string(result.Body()))
 	res := ut.PerformRequest(engine, "Get", "http://www.example.com/foo", nil).Result()
 
 	assert.Assert(t, http.StatusMovedPermanently == res.StatusCode())
-	assert.Assert(t, "https://www.example.com/foo" == res.Header.Get("Location"))
+	assert.DeepEqual(t, "https://www.example.com/foo", res.Header.Get("Location"))
 }
 
 func TestNoAllowHosts(t *testing.T) {
@@ -81,7 +81,7 @@ func TestNoAllowHosts(t *testing.T) {
 	})
 	result := performRequest(engine, "http://www.example.com/foo")
 	assert.Assert(t, http.StatusOK == result.StatusCode())
-	assert.Assert(t, "bar" == string(result.Body()))
+	assert.DeepEqual(t, "bar", string(result.Body()))
 }
 
 func TestGoodSingleAllowHosts(t *testing.T) {
