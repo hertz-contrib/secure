@@ -27,8 +27,6 @@ package secure
 
 import (
 	"context"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -419,44 +417,4 @@ func TestIsIpv4Host(t *testing.T) {
 
 func performRequest(engine *route.Engine, url string, header ...ut.Header) *protocol.Response {
 	return ut.PerformRequest(engine, consts.MethodGet, url, nil).Result()
-}
-
-func performRequest1(engine *route.Engine, method, url string, body *ut.Body, r *protocol.Request,
-	headers ...ut.Header) *ut.ResponseRecorder {
-	ctx := engine.NewContext()
-
-	if body != nil && body.Body != nil {
-		r = protocol.NewRequest(method, url, body.Body)
-		r.CopyTo(&ctx.Request)
-		if engine.IsStreamRequestBody() || body.Len == -1 {
-			ctx.Request.SetBodyStream(body.Body, body.Len)
-		} else {
-			buf, err := ioutil.ReadAll(&io.LimitedReader{R: body.Body, N: int64(body.Len)})
-			ctx.Request.SetBody(buf)
-			if err != nil && err != io.EOF {
-				panic(err)
-			}
-		}
-	} else {
-		r = protocol.NewRequest(method, url, nil)
-		r.CopyTo(&ctx.Request)
-	}
-	for _, v := range headers {
-		if ctx.Request.Header.Get(v.Key) != "" {
-			ctx.Request.Header.Add(v.Key, v.Value)
-		} else {
-			ctx.Request.Header.Set(v.Key, v.Value)
-		}
-	}
-
-	engine.ServeHTTP(context.Background(), ctx)
-
-	w := ut.NewRecorder()
-	h := w.Header()
-	ctx.Response.Header.CopyTo(h)
-
-	w.WriteHeader(ctx.Response.StatusCode())
-	w.Write(ctx.Response.Body())
-	w.Flush()
-	return w
 }
