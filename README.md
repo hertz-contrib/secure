@@ -1,27 +1,27 @@
 # Secure (This is a community driven project)
 
-Secure middleware for hertz framework.
+`Secure` middleware for hertz framework.
 
 This repo is forked from [sessions](https://github.com/gin-contrib/secure) and adapted for hertz.
 
-## Usage
-### Start using it
-
-Download and install it:
+## Install
 
 ```bash
 go get github.com/hertz-contrib/secure
 ```
 
-Import it in your code:
+### [Default example](example/default/main.go)
+
+Default configuration for users to set security configuration directly using secure middleware
+
+#### Function Signature
 
 ```go
-import "github.com/hertz-contrib/secure"
+func DefaultConfig() Config
 ```
 
-## Example
+#### Sample Code
 
-### [Default example](example/default/main.go)
 ```go
 package main
 
@@ -48,15 +48,26 @@ func main() {
 ```
 
 ### [Custom example](example/custom/main.go)
+
+User passed in custom configuration items
+
+#### Function Signature
+
+```go
+func New(config Config) app.HandlerFunc
+```
+
+#### Sample Code
+
 ```go
 func main() {
-	h := server.Default(
-		server.WithHostPorts("127.0.0.1:8080"),
-	)
-	h.Use(secure.New(secure.Config{
-		AllowedHosts:          []string{"example.com", "ssl.example.com"},
-		SSLRedirect:           true,
-		SSLHost:               "ssl.example.com",
+h := server.Default(
+server.WithHostPorts("127.0.0.1:8080"),
+)
+h.Use(secure.New(secure.Config{
+AllowedHosts:          []string{"example.com", "ssl.example.com"},
+SSLRedirect:           true,
+SSLHost:               "ssl.example.com",
 		STSSeconds:            315360000,
 		STSIncludeSubdomains:  true,
 		FrameDeny:             true,
@@ -64,31 +75,50 @@ func main() {
 		BrowserXssFilter:      true,
 		ContentSecurityPolicy: "default-src 'self'",
 		IENoOpen:              true,
-		ReferrerPolicy:        "strict-origin-when-cross-origin",
-		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
-	}))
+ReferrerPolicy:        "strict-origin-when-cross-origin",
+SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+}))
 
-	h.GET("/ping", func(c context.Context, ctx *app.RequestContext) {
-		ctx.String(200, "pong")
-	})
-	h.Spin()
+h.GET("/ping", func(c context.Context, ctx *app.RequestContext) {
+ctx.String(200, "pong")
+})
+h.Spin()
 }
 ```
+
+## Default Configuration
+
+```go
+func DefaultConfig() Config {
+return Config{
+SSLRedirect:           true,
+IsDevelopment:         false,
+STSSeconds:            315360000,
+STSIncludeSubdomains:  true,
+FrameDeny:             true,
+ContentTypeNosniff:    true,
+BrowserXssFilter:      true,
+ContentSecurityPolicy: "default-src 'self'",
+IENoOpen:              true,
+SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+}
+}
+```
+
 ## Option
 
-
-| Option                | Default Value                                   | Description                                                                                                                                 |
-|-----------------------|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| SSLRedirect           | true                                            | If `SSLRedirect` is set to true, then only allow https requests                                                                             |
-| IsDevelopment         | false                                           | When true, the whole security policy applied by the middleware is disabled completely.                                                      |
-| STSSeconds            | 315360000                                       | Default is 315360000, which would NOT include the header.                                                                                   |
-| STSIncludeSubdomains  | true                                            | If STSIncludeSubdomains is set to true, the `includeSubdomains` will be appended to the Strict-Transport-Security header. Default is false. |
-| FrameDeny             | true                                            | If FrameDeny is set to true, adds the X-Frame-Options header with the value of `DENY`. Default is false                                     |
-| ContentTypeNosniff    | true                                            | If ContentTypeNosniff is true, adds the X-Content-Type-Options header with the value `nosniff`. Default is false.                           |
-| BrowserXssFilter      | true                                            | If BrowserXssFilter is true, adds the X-XSS-Protection header with the value `1; mode=block`. Default is false.                             |
-| ContentSecurityPolicy | "default-src 'self'",                           | ContentSecurityPolicy allows the Content-Security-Policy header value to be set with a custom value. Default is "".                         |
-| IENoOpen              | true                                            | Prevent Internet Explorer from executing downloads in your site’s context                                                                   |
-| SSLProxyHeaders       | map[string]string{"X-Forwarded-Proto": "https"} | This is useful when your app is running behind a secure proxy that forwards requests to your app over http (such as on Heroku).             |
+| Option                | Default Value                                   | Description                                                  |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| SSLRedirect           | true                                            | If `SSLRedirect` is set to true, then only allow https requests |
+| IsDevelopment         | false                                           | When true, the whole security policy applied by the middleware is disabled completely. |
+| STSSeconds            | 315360000                                       | Default is 315360000, which would NOT include the header.    |
+| STSIncludeSubdomains  | true                                            | If `STSIncludeSubdomains` is set to true, the `includeSubdomains` will be appended to the Strict-Transport-Security header. Default is false. |
+| FrameDeny             | true                                            | If `FrameDeny` is set to true, adds the X-Frame-Options header with the value of `DENY`. Default is false |
+| ContentTypeNosniff    | true                                            | If ContentTypeNosniff is true, adds the X-Content-Type-Options header with the value `nosniff`. Default is false. |
+| BrowserXssFilter      | true                                            | If BrowserXssFilter is true, adds the X-XSS-Protection header with the value `1; mode=block`. Default is false. |
+| ContentSecurityPolicy | "default-src 'self'",                           | ContentSecurityPolicy allows the Content-Security-Policy header value to be set with a custom value. Default is "". |
+| IENoOpen              | true                                            | Prevent Internet Explorer from executing downloads in your site’s context |
+| SSLProxyHeaders       | map[string]string{"X-Forwarded-Proto": "https"} | This is useful when your app is running behind a secure proxy that forwards requests to your app over http (such as on Heroku). |
 
 ## License
 
