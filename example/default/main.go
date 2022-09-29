@@ -34,10 +34,11 @@ import (
 
 func main() {
 	h := server.New(server.WithHostPorts(":8080"))
-	securityConfig := secure.DefaultConfig()
-	securityConfig.AllowedHosts = []string{"example.com", "ssl.example.com"}
-	securityConfig.SSLHost = "ssl.example.com"
-	h.Use(secure.New(securityConfig))
+
+	h.Use(secure.Default(
+		secure.WithSSLHost("ssl.example.com"),
+		secure.WithAllowedHosts([]string{"example.com", "ssl.example.com"}),
+	))
 	h.GET("/ping", func(ctx context.Context, c *app.RequestContext) {
 		c.String(200, "pong")
 	})
