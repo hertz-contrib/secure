@@ -27,6 +27,7 @@ package secure
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -45,20 +46,70 @@ const (
 	testResponse = "bar"
 )
 
+func newPolicyForTest(opts []Option) *policy {
+	policy := &policy{}
+	policy.fixedHeaders = &protocol.ResponseHeader{}
+	policy.config.Apply(opts)
+	// Frame Options header.
+	if len(policy.config.customFrameOptionsValue) > 0 {
+		policy.addHeader("X-Frame-Options", policy.config.customFrameOptionsValue)
+	} else if policy.config.frameDeny {
+		policy.addHeader("X-Frame-Options", "DENY")
+	}
+
+	// Content Type Options header.
+	if policy.config.contentTypeNosniff {
+		policy.addHeader("X-Content-Type-Options", "nosniff")
+	}
+
+	// XSS Protection header.
+	if policy.config.browserXssFilter {
+		policy.addHeader("X-Xss-Protection", "1; mode=block")
+	}
+
+	// Content Security Policy header.
+	if len(policy.config.contentSecurityPolicy) > 0 {
+		policy.addHeader("Content-Security-Policy", policy.config.contentSecurityPolicy)
+	}
+
+	if len(policy.config.referrerPolicy) > 0 {
+		policy.addHeader("Referrer-Policy", policy.config.referrerPolicy)
+	}
+
+	// Strict Transport Security header.
+	if policy.config.stsSeconds != 0 {
+		stsSub := ""
+		if policy.config.stsIncludeSubdomains {
+			stsSub = "; includeSubdomains"
+		}
+
+		policy.addHeader(
+			"Strict-Transport-Security",
+			fmt.Sprintf("max-age=%d%s", policy.config.stsSeconds, stsSub))
+	}
+
+	// X-Download-Options header.
+	if policy.config.ieNoOpen {
+		policy.addHeader("X-Download-Options", "noopen")
+	}
+
+	// featurePolicy header.
+	if len(policy.config.featurePolicy) > 0 {
+		policy.addHeader("Feature-Policy", policy.config.featurePolicy)
+	}
+	return policy
+}
+
 func newServer(options ...Option) *route.Engine {
 	opts := config.NewOptions([]config.Option{})
 	engine := route.NewEngine(opts)
-	engine.Use(New(options...))
-	engine.GET("/foo", func(_ context.Context, c *app.RequestContext) {
-		c.String(200, testResponse)
+	engine.Use(func(ctx context.Context, c *app.RequestContext) {
+		policy := newPolicyForTest(options)
+		if !policy.applyToContext(ctx, c) {
+			return
+		}
+		c.Next(ctx)
 	})
-	return engine
-}
-
-func newDefaultServer(options ...Option) *route.Engine {
-	opts := config.NewOptions([]config.Option{})
-	engine := route.NewEngine(opts)
-	engine.Use(Default(options...))
 	engine.GET("/foo", func(_ context.Context, c *app.RequestContext) {
 		c.String(200, testResponse)
 	})
@@ -73,22 +124,10 @@ func TestNoConfig(t *testing.T) {
 	assert.DeepEqual(t, "bar", string(result.Body()))
 }
 
-func TestDefaultConfig(t *testing.T) {
-	engine := newDefaultServer()
-	w := ut.PerformRequest(engine, "GET", "https://www.example.com/foo", nil)
-	result := w.Result()
-	assert.Assert(t, http.StatusOK == result.StatusCode())
-	assert.DeepEqual(t, "bar", string(result.Body()))
-	res := ut.PerformRequest(engine, "Get", "http://www.example.com/foo", nil).Result()
-
-	assert.Assert(t, http.StatusMovedPermanently == res.StatusCode())
-	assert.DeepEqual(t, "https://www.example.com/foo", res.Header.Get("Location"))
-}
-
 func TestNoAllowHosts(t *testing.T) {
 	engine := newServer(WithAllowedHosts([]string{}))
 	result := performRequest(engine, "http://www.example.com/foo")
-	assert.Assert(t, http.StatusOK == result.StatusCode())
+	assert.DeepEqual(t, http.StatusOK, result.StatusCode())
 	assert.DeepEqual(t, "bar", string(result.Body()))
 }
 

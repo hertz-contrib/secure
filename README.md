@@ -10,38 +10,6 @@ This repo is forked from [secure](https://github.com/gin-contrib/secure) and ada
 go get github.com/hertz-contrib/secure
 ```
 
-### [Default example](example/default/main.go)
-
-Default configuration for users to set security configuration directly using secure middleware
-
-#### Sample Code
-
-```go
-package main
-
-import (
-	"context"
-
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/app/server"
-	"github.com/hertz-contrib/secure"
-)
-
-func main() {
-	h := server.New(server.WithHostPorts(":8080"))
-
-	h.Use(secure.Default(
-		secure.WithSSLHost("ssl.example.com"),
-		secure.WithAllowedHosts([]string{"example.com", "ssl.example.com"}),
-	))
-	h.GET("/ping", func(ctx context.Context, c *app.RequestContext) {
-		c.String(200, "pong")
-	})
-	h.Spin()
-}
-
-```
-
 ### [Custom example](example/custom/main.go)
 
 User passed in custom configuration items
@@ -71,17 +39,7 @@ func main() {
 	)
 	h.Use(secure.New(
 		secure.WithAllowedHosts([]string{"example.com", "ssl.example.com"}),
-		secure.WithSSLRedirect(true),
 		secure.WithSSLHost("ssl.example.com"),
-		secure.WithSTSSecond(315360000),
-		secure.WithSTSIncludeSubdomains(true),
-		secure.WithFrameDeny(true),
-		secure.WithContentTypeNosniff(true),
-		secure.WithBrowserXssFilter(true),
-		secure.WithContentSecurityPolicy("default-src 'self'"),
-		secure.WithIENoOpen(true),
-		secure.WithReferrerPolicy("strict-origin-when-cross-origin"),
-		secure.WithSSLProxyHeaders(map[string]string{"X-Forwarded-Proto": "https"}),
 	))
 
 	h.GET("/ping", func(c context.Context, ctx *app.RequestContext) {
@@ -94,21 +52,18 @@ func main() {
 ## Default Configuration
 
 ```go
-    func Default(opts ...Option) app.HandlerFunc {
-        options := []Option{
-            WithSSLRedirect(true),
-            WithIsDevelopment(false),
-            WithSTSSecond(315360000),
-            WithFrameDeny(true),
-            WithContentTypeNosniff(true),
-            WithBrowserXssFilter(true),
-            WithContentSecurityPolicy("default-src 'self'"),
-            WithIENoOpen(true),
-            WithSSLProxyHeaders(map[string]string{"X-Forwarded-Proto": "https"}),
-        }
-        options = append(options, opts...)
-        return New(options...)
-    }
+    config:
+	options{
+	    sslRedirect:           true,
+	    isDevelopment:         false,
+	    stsSeconds:            315360000,
+	    frameDeny:             true,
+	    contentTypeNosniff:    true,
+	    browserXssFilter:      true,
+	    contentSecurityPolicy: "default-src 'self'",
+	    ieNoOpen:              true,
+	    sslProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
+       },
 ```
 
 ## Option
