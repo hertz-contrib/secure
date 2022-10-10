@@ -27,6 +27,3 @@ jobs:
 
       - name: Unit Test
         run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
-
-      - name: Benchmark
-        run: go test -bench=. -benchmem -run=none ./...
