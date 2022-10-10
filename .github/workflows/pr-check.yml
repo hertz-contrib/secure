@@ -44,4 +44,3 @@ jobs:
           fail_on_error: true
           # Set staticcheck flags
           staticcheck_flags: -checks=inherit,-SA1029
-
